@@ -1,0 +1,472 @@
+#Alternate Class Project- Intro to Data Science
+# Jooyeon Shchupak
+# 06/20/2019
+rm(list = ls()) #Clear the environment to make sure no previously saved work affect this file
+
+# 1. Import the data:
+housing <- read.csv("housing.csv")
+head(housing)
+# longitude latitude housing_median_age total_rooms total_bedrooms population households median_income median_house_value
+# 1   -122.23    37.88                 41         880            129        322        126        8.3252             452600
+# 2   -122.22    37.86                 21        7099           1106       2401       1138        8.3014             358500
+# 3   -122.24    37.85                 52        1467            190        496        177        7.2574             352100
+# 4   -122.25    37.85                 52        1274            235        558        219        5.6431             341300
+# 5   -122.25    37.85                 52        1627            280        565        259        3.8462             342200
+# 6   -122.25    37.85                 52         919            213        413        193        4.0368             269700
+# ocean_proximity
+# 1        NEAR BAY
+# 2        NEAR BAY
+# 3        NEAR BAY
+# 4        NEAR BAY
+# 5        NEAR BAY
+# 6        NEAR BAY
+
+summary(housing)
+# longitude         latitude     housing_median_age  total_rooms    total_bedrooms     population      households    
+# Min.   :-124.3   Min.   :32.54   Min.   : 1.00      Min.   :    2   Min.   :   1.0   Min.   :    3   Min.   :   1.0  
+# 1st Qu.:-121.8   1st Qu.:33.93   1st Qu.:18.00      1st Qu.: 1448   1st Qu.: 296.0   1st Qu.:  787   1st Qu.: 280.0  
+# Median :-118.5   Median :34.26   Median :29.00      Median : 2127   Median : 435.0   Median : 1166   Median : 409.0  
+# Mean   :-119.6   Mean   :35.63   Mean   :28.64      Mean   : 2636   Mean   : 537.9   Mean   : 1425   Mean   : 499.5  
+# 3rd Qu.:-118.0   3rd Qu.:37.71   3rd Qu.:37.00      3rd Qu.: 3148   3rd Qu.: 647.0   3rd Qu.: 1725   3rd Qu.: 605.0  
+# Max.   :-114.3   Max.   :41.95   Max.   :52.00      Max.   :39320   Max.   :6445.0   Max.   :35682   Max.   :6082.0  
+#                                                                     NA's   :207                                      
+#  median_income     median_house_value   ocean_proximity
+#  Min.   : 0.4999   Min.   : 14999     <1H OCEAN :9136  
+#  1st Qu.: 2.5634   1st Qu.:119600     INLAND    :6551  
+#  Median : 3.5348   Median :179700     ISLAND    :   5  
+#  Mean   : 3.8707   Mean   :206856     NEAR BAY  :2290  
+#  3rd Qu.: 4.7432   3rd Qu.:264725     NEAR OCEAN:2658  
+#  Max.   :15.0001   Max.   :500001 
+
+# 2. Explore the data:
+# Let's look at the structure of the data to confirm continuous numeric variables:
+str(housing)
+# 'data.frame':	20640 obs. of  10 variables:
+# $ longitude         : num  -122 -122 -122 -122 -122 ...
+# $ latitude          : num  37.9 37.9 37.9 37.9 37.9 ...
+# $ housing_median_age: num  41 21 52 52 52 52 52 52 42 52 ...
+# $ total_rooms       : num  880 7099 1467 1274 1627 ...
+# $ total_bedrooms    : num  129 1106 190 235 280 ...
+# $ population        : num  322 2401 496 558 565 ...
+# $ households        : num  126 1138 177 219 259 ...
+# $ median_income     : num  8.33 8.3 7.26 5.64 3.85 ...
+# $ median_house_value: num  452600 358500 352100 341300 342200 ...
+# $ ocean_proximity   : Factor w/ 5 levels "<1H OCEAN","INLAND",..: 4 4 4 4 4 4 4 4 4 4 ...
+
+# Create histograms to do some exploratory data analysis:
+# (Skipping histograms of longitude and latitude as they won't be meaningful.)
+
+# Histogram of Median House Age:
+hist_median_age <- hist(housing$housing_median_age, freq = TRUE, main="Histogram of Median Age of House", xlab = "Median Age of House", xlim = c(0,60), col="skyblue3")
+# Majority of the housing seems to be between 15 to 40 years old. 
+plot(housing$housing_median_age, housing$median_house_value, main = "Housing Median Age vs. Median House Value")
+# Looking at the density of the distribution, it looks like there could be some non-linear relationship. 
+
+# Histogram of Total Rooms
+hist_total_rm <- hist(housing$total_rooms, freq = TRUE, main = "Histogram of Total Rooms", xlab = "Total Rooms per Census Block Group")
+# The data looks highly concentrated near zero due to the longtail in large scale.
+# Let's take a look at where the majority of the data points are by using bloxplot:
+boxplot(housing$total_rooms, main = "Majority of Total Rooms in Boxplot")
+total_rm_subset_10000 <- subset(housing, total_rooms < 10000, select = c(total_rooms))
+# The first boxplot shows that the majority of the data is somewhare under 10,000:
+boxplot(total_rm_subset_10000, main = "Total Rooms under 10,000")
+# The second boxplot shows that the normal range of the values for Total Rooms is between 1,500 and 3,500 roughly.
+# See boxplot-total-rooms and boxplot-total-rooms-under-10k for the graphics.
+
+# Since the histogram doesn't seem to tell me much, let's plot them against the response variable to see if there's any relationship:
+plot(housing$total_rooms, housing$median_house_value, main = "Total Rooms vs. Median House Value")
+plot(housing$total_bedrooms, housing$median_house_value, main = "Total Bedrooms vs. Median House Value")
+# The total rooms and total bedrooms don't seem to be useful for predicting median house values directly. We may use this to create
+# new, more directly related metrics for predicting median house value later on.
+
+hist_total_bed <- hist(housing$total_bedrooms, freq = TRUE, main = "Histogram of Total Bedrooms", xlab = "Total Bedrooms per Census Block Group")
+
+# Same issue with Population. This metric does not seem to be useful for directly predicting the median house value. It may not be relevant at all.
+hist_pop <- hist(housing$population, freq = TRUE)
+plot(housing$population, housing$median_house_value, main = "Population vs. Median House Value")
+
+# Same issue with Households. This metric does not seem to be useful for directly predicting the median house value.This could be useful when 
+# we can use this metric with the average total rooms and bedrooms per household in each Census block group. 
+hist_households <- hist(housing$households, freq = TRUE)
+plot(housing$households, housing$median_house_value, main = "Households vs. Median House Value")
+
+# There seems to be some kind of correlation between Median Income and Median House Value. There seems to be a lot of outliners 
+# if we assume a linear relationship.
+hist_median_income <- hist(housing$median_income, freq = TRUE, main="Histogram of Median Income", xlab = "Median Income", col="skyblue3")
+plot(housing$median_income, housing$median_house_value, main = "Median Income vs. Median House Value")
+
+# Finally exploring the response variable:
+hist_median_house_value <- hist(housing$median_house_value, freq = TRUE, main = "Histogram of Median House Value", xlab = "Median House Value, 1990 Census", col="skyblue3")
+boxplot(housing$median_house_value, main = "Normal Range of Median House Value")
+
+# 3. Transform the data:
+# Impute the total_bedrooms variable's N/A's with its median value. 
+
+# Before executing the imputation, let's document where the missing values are so that we can QA the imputation 
+# after we implement the work.
+# First, find some NA's in the data set:
+total_bed_NA <- is.na(housing$total_bedrooms)
+# ...
+# [267] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+# [286] FALSE FALSE FALSE FALSE FALSE  TRUE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+# [305] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+# [324] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE  TRUE
+# [343] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+# [362] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+# ...
+# From the index above, it looks like data point 291 and 342 are NA's:
+housing$total_bedrooms[291]
+# [1] NA
+housing$total_bedrooms[342]
+# [1] NA
+# Just to double check, let's check a non-NA data point:
+housing$total_bedrooms[341]
+# [1] 218
+
+# The median value for total_bedrooms variable is:
+# Median : 435.0
+# So, the expected value for 291 and 342 is 435, while the value of 341 still stays as 218.
+
+# Now that I know which ones to check after imputation, let's execute the imputation:
+housing_imputed_bedrm <- transform(housing, total_bedrooms = ifelse(total_bed_NA, median(total_bedrooms, na.rm=TRUE), total_bedrooms))
+housing_imputed_bedrm$total_bedrooms[291]
+# [1] 435
+housing_imputed_bedrm$total_bedrooms[342]
+# [1] 435
+housing_imputed_bedrm$total_bedrooms[342]
+# [1] 218
+# And this index should show no TRUE values any more:
+is.na(housing_imputed_bedrm$total_bedrooms)
+# [267] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+# [286] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+# [305] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+# [324] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+# [343] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+# [362] FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE FALSE
+
+# Let's look at the summary of Total Bedrooms variable after the imputation:
+summary(housing_imputed_bedrm$total_bedrooms)
+# Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 1.0   297.0   435.0   536.8   643.2  6445.0
+
+# You can see that the median is the same, but the mean decreased slightly from 537.9 before the imputation to 536.8.
+# The overall value did not change much. However, if some of the imputed value was inserted in a data point where 
+# the household number was very low or very high, it could create more outliers. This should be noted for the overall analysis.
+
+# Split the ocean_proximity variable and then remove the original categorical variable. 
+ 
+# First, understand the possible values ocean_proximity:
+prox_levels <- levels(housing$ocean_proximity)
+prox_levels
+# [1] "<1H OCEAN"  "INLAND"     "ISLAND"     "NEAR BAY"   "NEAR OCEAN"
+
+# Create the binary categorical variables:
+binary_prox <- function(c) {return(housing_imputed_bedrm$ocean_proximity == c)}
+
+new_prox_variables <- sapply(prox_levels, binary_prox)
+# Confirm that the new categorical variables are created:
+head(new_prox_variables)
+# <1H OCEAN INLAND ISLAND NEAR BAY NEAR OCEAN
+# [1,]     FALSE  FALSE  FALSE     TRUE      FALSE
+# [2,]     FALSE  FALSE  FALSE     TRUE      FALSE
+# [3,]     FALSE  FALSE  FALSE     TRUE      FALSE
+# [4,]     FALSE  FALSE  FALSE     TRUE      FALSE
+# [5,]     FALSE  FALSE  FALSE     TRUE      FALSE
+# [6,]     FALSE  FALSE  FALSE     TRUE      FALSE
+
+# Combine the new variables with the original variable and check they are corrected created:
+combined_cat_var <- cbind(housing_imputed_bedrm[,c("ocean_proximity")], new_prox_variables)
+head(combined_cat_var)
+# <1H OCEAN INLAND ISLAND NEAR BAY NEAR OCEAN
+# [1,] 4         0      0      0        1          0
+# [2,] 4         0      0      0        1          0
+# [3,] 4         0      0      0        1          0
+# [4,] 4         0      0      0        1          0
+# [5,] 4         0      0      0        1          0
+# [6,] 4         0      0      0        1          0
+tail(combined_cat_var)
+#            <1H OCEAN INLAND ISLAND NEAR BAY NEAR OCEAN
+# [20635,] 2         0      1      0        0          0
+# [20636,] 2         0      1      0        0          0
+# [20637,] 2         0      1      0        0          0
+# [20638,] 2         0      1      0        0          0
+# [20639,] 2         0      1      0        0          0
+# [20640,] 2         0      1      0        0          0
+# The results above shows that the values of the original variable are aligned with the values of 
+# the new binary categorical variables.
+
+# Add these new categorical variables to the imputed data set:
+cleaned_housing1 <- housing_imputed_bedrm
+cleaned_housing1$"<1H OCEAN" <- combined_cat_var[,2]
+cleaned_housing1$"INLAND" <- combined_cat_var[,3]
+cleaned_housing1$"ISLAND" <- combined_cat_var[,4]
+cleaned_housing1$"NEAR BAY" <- combined_cat_var[,5]
+cleaned_housing1$"NEAR OCEAN" <- combined_cat_var[,6]
+
+# Check the implementation:
+head(cleaned_housing1)
+# longitude latitude housing_median_age total_rooms total_bedrooms population households median_income median_house_value
+# 1   -122.23    37.88                 41         880            129        322        126        8.3252             452600
+# 2   -122.22    37.86                 21        7099           1106       2401       1138        8.3014             358500
+# 3   -122.24    37.85                 52        1467            190        496        177        7.2574             352100
+# 4   -122.25    37.85                 52        1274            235        558        219        5.6431             341300
+# 5   -122.25    37.85                 52        1627            280        565        259        3.8462             342200
+# 6   -122.25    37.85                 52         919            213        413        193        4.0368             269700
+# ocean_proximity <1H OCEAN INLAND ISLAND NEAR BAY NEAR OCEAN
+# 1        NEAR BAY         0      0      0        1          0
+# 2        NEAR BAY         0      0      0        1          0
+# 3        NEAR BAY         0      0      0        1          0
+# 4        NEAR BAY         0      0      0        1          0
+# 5        NEAR BAY         0      0      0        1          0
+# 6        NEAR BAY         0      0      0        1          0
+
+# Remove the original variable:
+cleaned_housing2 <- cleaned_housing1[,-10]
+head(cleaned_housing2)
+#   longitude latitude housing_median_age total_rooms total_bedrooms population households median_income median_house_value
+# 1   -122.23    37.88                 41         880            129        322        126        8.3252             452600
+# 2   -122.22    37.86                 21        7099           1106       2401       1138        8.3014             358500
+# 3   -122.24    37.85                 52        1467            190        496        177        7.2574             352100
+# 4   -122.25    37.85                 52        1274            235        558        219        5.6431             341300
+# 5   -122.25    37.85                 52        1627            280        565        259        3.8462             342200
+# 6   -122.25    37.85                 52         919            213        413        193        4.0368             269700
+# <1H OCEAN INLAND ISLAND NEAR BAY NEAR OCEAN
+# 1         0      0      0        1          0
+# 2         0      0      0        1          0
+# 3         0      0      0        1          0
+# 4         0      0      0        1          0
+# 5         0      0      0        1          0
+# 6         0      0      0        1          0
+
+# Create variables for average number of rooms and bedrooms per household:
+cleaned_housing2$"mean_number_bedrooms" <- cleaned_housing2$total_bedrooms/cleaned_housing2$households
+cleaned_housing2$"mean_number_rooms" <- cleaned_housing2$total_rooms/cleaned_housing2$households
+# check to make sure the mean values look right:
+summary(cleaned_housing2)
+#    longitude         latitude     housing_median_age  total_rooms    total_bedrooms     population      households    
+# Min.   :-124.3   Min.   :32.54   Min.   : 1.00      Min.   :    2   Min.   :   1.0   Min.   :    3   Min.   :   1.0  
+# 1st Qu.:-121.8   1st Qu.:33.93   1st Qu.:18.00      1st Qu.: 1448   1st Qu.: 297.0   1st Qu.:  787   1st Qu.: 280.0  
+# Median :-118.5   Median :34.26   Median :29.00      Median : 2127   Median : 435.0   Median : 1166   Median : 409.0  
+# Mean   :-119.6   Mean   :35.63   Mean   :28.64      Mean   : 2636   Mean   : 536.8   Mean   : 1425   Mean   : 499.5  
+# 3rd Qu.:-118.0   3rd Qu.:37.71   3rd Qu.:37.00      3rd Qu.: 3148   3rd Qu.: 643.2   3rd Qu.: 1725   3rd Qu.: 605.0  
+# Max.   :-114.3   Max.   :41.95   Max.   :52.00      Max.   :39320   Max.   :6445.0   Max.   :35682   Max.   :6082.0  
+# median_income     median_house_value   <1H OCEAN          INLAND           ISLAND             NEAR BAY     
+# Min.   : 0.4999   Min.   : 14999     Min.   :0.0000   Min.   :0.0000   Min.   :0.0000000   Min.   :0.0000  
+# 1st Qu.: 2.5634   1st Qu.:119600     1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000000   1st Qu.:0.0000  
+# Median : 3.5348   Median :179700     Median :0.0000   Median :0.0000   Median :0.0000000   Median :0.0000  
+# Mean   : 3.8707   Mean   :206856     Mean   :0.4426   Mean   :0.3174   Mean   :0.0002422   Mean   :0.1109  
+# 3rd Qu.: 4.7432   3rd Qu.:264725     3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.:0.0000000   3rd Qu.:0.0000  
+# Max.   :15.0001   Max.   :500001     Max.   :1.0000   Max.   :1.0000   Max.   :1.0000000   Max.   :1.0000  
+# NEAR OCEAN     mean_number_bedrooms mean_number_rooms 
+# Min.   :0.0000   Min.   : 0.1212      Min.   :  0.8461  
+# 1st Qu.:0.0000   1st Qu.: 1.0055      1st Qu.:  4.4407  
+# Median :0.0000   Median : 1.0489      Median :  5.2291  
+# Mean   :0.1288   Mean   : 1.1009      Mean   :  5.4290  
+# 3rd Qu.:0.0000   3rd Qu.: 1.1000      3rd Qu.:  6.0524  
+# Max.   :1.0000   Max.   :34.0667      Max.   :141.9091  
+
+# Remove total bedrooms and total rooms:
+cleaned_housing3 <- cleaned_housing2[,-c(4:5)]
+summary(cleaned_housing3)
+#    longitude         latitude     housing_median_age   population      households     median_income     median_house_value
+# Min.   :-124.3   Min.   :32.54   Min.   : 1.00      Min.   :    3   Min.   :   1.0   Min.   : 0.4999   Min.   : 14999    
+# 1st Qu.:-121.8   1st Qu.:33.93   1st Qu.:18.00      1st Qu.:  787   1st Qu.: 280.0   1st Qu.: 2.5634   1st Qu.:119600    
+# Median :-118.5   Median :34.26   Median :29.00      Median : 1166   Median : 409.0   Median : 3.5348   Median :179700    
+# Mean   :-119.6   Mean   :35.63   Mean   :28.64      Mean   : 1425   Mean   : 499.5   Mean   : 3.8707   Mean   :206856    
+# 3rd Qu.:-118.0   3rd Qu.:37.71   3rd Qu.:37.00      3rd Qu.: 1725   3rd Qu.: 605.0   3rd Qu.: 4.7432   3rd Qu.:264725    
+# Max.   :-114.3   Max.   :41.95   Max.   :52.00      Max.   :35682   Max.   :6082.0   Max.   :15.0001   Max.   :500001    
+# <1H OCEAN          INLAND           ISLAND             NEAR BAY        NEAR OCEAN     mean_number_bedrooms
+# Min.   :0.0000   Min.   :0.0000   Min.   :0.0000000   Min.   :0.0000   Min.   :0.0000   Min.   : 0.1212     
+# 1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.: 1.0055     
+# Median :0.0000   Median :0.0000   Median :0.0000000   Median :0.0000   Median :0.0000   Median : 1.0489     
+# Mean   :0.4426   Mean   :0.3174   Mean   :0.0002422   Mean   :0.1109   Mean   :0.1288   Mean   : 1.1009     
+# 3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.:0.0000000   3rd Qu.:0.0000   3rd Qu.:0.0000   3rd Qu.: 1.1000     
+# Max.   :1.0000   Max.   :1.0000   Max.   :1.0000000   Max.   :1.0000   Max.   :1.0000   Max.   :34.0667     
+# mean_number_rooms 
+# Min.   :  0.8461  
+# 1st Qu.:  4.4407  
+# Median :  5.2291  
+# Mean   :  5.4290  
+# 3rd Qu.:  6.0524  
+# Max.   :141.9091  
+
+# Perform feature scaling for all numerical variables except for the response variable: median_house_value:
+cleaned_housing_scaled <- scale(cleaned_housing3[,c(1:6,13:14)])
+summary(cleaned_housing_scaled)
+#    longitude          latitude       housing_median_age   population        households      median_income    
+# Min.   :-2.3859   Min.   :-1.4475   Min.   :-2.19613   Min.   :-1.2561   Min.   :-1.3040   Min.   :-1.7743  
+# 1st Qu.:-1.1132   1st Qu.:-0.7968   1st Qu.:-0.84537   1st Qu.:-0.5638   1st Qu.:-0.5742   1st Qu.:-0.6881  
+# Median : 0.5389   Median :-0.6423   Median : 0.02865   Median :-0.2291   Median :-0.2368   Median :-0.1768  
+# Mean   : 0.0000   Mean   : 0.0000   Mean   : 0.00000   Mean   : 0.0000   Mean   : 0.0000   Mean   : 0.0000  
+# 3rd Qu.: 0.7785   3rd Qu.: 0.9729   3rd Qu.: 0.66429   3rd Qu.: 0.2645   3rd Qu.: 0.2758   3rd Qu.: 0.4593  
+# Max.   : 2.6252   Max.   : 2.9580   Max.   : 1.85614   Max.   :30.2496   Max.   :14.6012   Max.   : 5.8581  
+# mean_number_bedrooms mean_number_rooms 
+# Min.   :-1.88710     Min.   :-1.85227  
+# 1st Qu.:-0.18373     1st Qu.:-0.39944  
+# Median :-0.10026     Median :-0.08078  
+# Mean   : 0.00000     Mean   : 0.00000  
+# 3rd Qu.:-0.00172     3rd Qu.: 0.25196  
+# Max.   :63.49837     Max.   :55.16190 
+
+# Create the final cleaned_housing data set:
+cleaned_housing <- cbind(cleaned_housing3[,c(8:12)],cleaned_housing_scaled,cleaned_housing3$median_house_value)
+summary(cleaned_housing)
+#    <1H OCEAN          INLAND           ISLAND             NEAR BAY        NEAR OCEAN       longitude      
+# Min.   :0.0000   Min.   :0.0000   Min.   :0.0000000   Min.   :0.0000   Min.   :0.0000   Min.   :-2.3859  
+# 1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:0.0000000   1st Qu.:0.0000   1st Qu.:0.0000   1st Qu.:-1.1132  
+# Median :0.0000   Median :0.0000   Median :0.0000000   Median :0.0000   Median :0.0000   Median : 0.5389  
+# Mean   :0.4426   Mean   :0.3174   Mean   :0.0002422   Mean   :0.1109   Mean   :0.1288   Mean   : 0.0000  
+# 3rd Qu.:1.0000   3rd Qu.:1.0000   3rd Qu.:0.0000000   3rd Qu.:0.0000   3rd Qu.:0.0000   3rd Qu.: 0.7785  
+# Max.   :1.0000   Max.   :1.0000   Max.   :1.0000000   Max.   :1.0000   Max.   :1.0000   Max.   : 2.6252  
+# latitude       housing_median_age   population        households      median_income     mean_number_bedrooms
+# Min.   :-1.4475   Min.   :-2.19613   Min.   :-1.2561   Min.   :-1.3040   Min.   :-1.7743   Min.   :-1.88710    
+# 1st Qu.:-0.7968   1st Qu.:-0.84537   1st Qu.:-0.5638   1st Qu.:-0.5742   1st Qu.:-0.6881   1st Qu.:-0.18373    
+# Median :-0.6423   Median : 0.02865   Median :-0.2291   Median :-0.2368   Median :-0.1768   Median :-0.10026    
+# Mean   : 0.0000   Mean   : 0.00000   Mean   : 0.0000   Mean   : 0.0000   Mean   : 0.0000   Mean   : 0.00000    
+# 3rd Qu.: 0.9729   3rd Qu.: 0.66429   3rd Qu.: 0.2645   3rd Qu.: 0.2758   3rd Qu.: 0.4593   3rd Qu.:-0.00172    
+# Max.   : 2.9580   Max.   : 1.85614   Max.   :30.2496   Max.   :14.6012   Max.   : 5.8581   Max.   :63.49837    
+# mean_number_rooms  cleaned_housing3$median_house_value
+# Min.   :-1.85227   Min.   : 14999                     
+# 1st Qu.:-0.39944   1st Qu.:119600                     
+# Median :-0.08078   Median :179700                     
+# Mean   : 0.00000   Mean   :206856                     
+# 3rd Qu.: 0.25196   3rd Qu.:264725                     
+# Max.   :55.16190   Max.   :500001   
+
+# Update the variable names from mean_number_~ to mean_~:
+colnames(cleaned_housing)[12] <- "mean_bedrooms"
+colnames(cleaned_housing)[13] <- "mean_rooms"
+colnames(cleaned_housing)[14] <- "median_house_value"
+colnames(cleaned_housing)
+#  [1] "<1H OCEAN"          "INLAND"             "ISLAND"             "NEAR BAY"           "NEAR OCEAN"        
+# [6] "longitude"          "latitude"           "housing_median_age" "population"         "households"        
+# [11] "median_income"      "mean_bedrooms"      "mean_rooms"         "median_house_value"   
+
+# Create Training and Test sets:
+summary(cleaned_housing)
+set.seed(1)
+n <- nrow(cleaned_housing) # Get the total number of observations
+ntrain <- round(n*0.8) # Get 80% of the data
+train_index <- sample(n, ntrain, replace = TRUE) # Create the 80% sample index
+train <- cleaned_housing[train_index,] # Create the train set
+test <- cleaned_housing[-train_index,] # Create the test set
+
+# Use randomForest to predict the median house value:
+library(randomForest) # Load randomForest
+# Create a new training set of predictor variables:
+train_x <- train[,-6]
+head(train_x)
+#       <1H OCEAN INLAND ISLAND NEAR BAY NEAR OCEAN   latitude housing_median_age  population households median_income
+# 5481          1      0      0        0          0 -0.7686789          0.3464696  0.26007338  0.5583147    -0.4729239
+# 7681          1      0      0        0          0 -0.8014511          0.5053819 -0.03309315 -0.2969679     0.1088149
+# 11824         0      1      0        0          0  1.5534703         -0.5275481 -0.36776218 -0.2420415    -0.5898822
+# 18746         0      1      0        0          0  2.3025506         -1.4015657  4.49067846  4.6228689    -0.1676320
+# 4163          1      0      0        0          0 -0.7124978          0.7437504 -0.33067485 -0.4643627    -0.8341156
+# 18543         0      0      0        0          1  0.6264833          1.7766804 -0.82782172 -0.7102238    -0.8812780
+# mean_bedrooms  mean_rooms median_house_value
+# 5481   0.0001378804 -0.42281218             325000
+# 7681  -0.2093427729 -0.08229462             171600
+# 11824 -0.0145313680 -0.27666940             153200
+# 18746 -0.1646340764  0.25075236             100100
+# 4163  -0.2721378774 -0.74074301             169300
+# 18543 -0.1605795320 -0.55629420             234400
+
+# Document the number of observations in training set
+str(train_x)
+# 'data.frame':	16512 obs. of  13 variables
+
+# Create a new training set containing only the response variable:
+train_y <- train$median_house_value
+summary(train_y)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 14999  119800  179750  207667  266700  500001 
+
+# Create a new test set of predictor variables: 
+test_x <- test[,-6]
+head(test_x)
+#    <1H OCEAN INLAND ISLAND NEAR BAY NEAR OCEAN latitude housing_median_age population households median_income
+# 1          0      0      0        1          0 1.052523          0.9821189 -0.9744050 -0.9770092    2.34470896
+# 2          0      0      0        1          0 1.043159         -0.6070042  0.8614180  1.6699206    2.33218146
+# 4          0      0      0        1          0 1.038478          1.8561366 -0.7660095 -0.7337637    0.93294491
+# 8          0      0      0        1          0 1.033796          1.8561366 -0.2370735  0.3856888   -0.39512708
+# 10         0      0      0        1          0 1.033796          1.8561366  0.1108410  0.5609302   -0.09446729
+# 11         0      0      0        1          0 1.038478          1.8561366 -0.4551823 -0.2551193   -0.35138613
+# mean_bedrooms  mean_rooms median_house_value
+# 1    -0.14851066  0.62854423             452600
+# 2    -0.24853594  0.32703343             358500
+# 4    -0.05364603  0.15696228             341300
+# 8    -0.07528787 -0.25522575             241400
+# 10   -0.21325660 -0.18527867             261100
+# 11   -0.04104367  0.01964786             281500
+
+# Document the number of observations in the test set:
+str(test_x)
+# 'data.frame':	9272 obs. of  13 variables
+
+# Create a new test set containing only the response variable:
+test_y <- test$median_house_value
+summary(test_y)
+#    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+# 14999  120175  180400  206670  263650  500001 
+
+# Create the randomForest model:
+rf = randomForest(train_x, y = train_y, ntree = 500, importance = TRUE)
+# Use names() to see all the different metrics computed by the algorithm:
+names(rf)
+#  [1] "call"            "type"            "predicted"       "mse"             "rsq"             "oob.times"      
+# [7] "importance"      "importanceSD"    "localImportance" "proximity"       "ntree"           "mtry"           
+# [13] "forest"          "coefs"           "y"               "test"            "inbag" 
+
+# Display rf$importance to see Mean Squared Error (MSE). 
+# It is defined as the measure of the increase in MSE of predictions when the given variable is shuffled, thereby acting as a metric of that given
+# variable's importance in the performance of the model. So, a higher number indicates a more important predictor.
+rf$importance
+#                         %IncMSE IncNodePurity
+# <1H OCEAN          1.286231e+08  2.381171e+12
+# INLAND             5.074364e+08  1.781453e+13
+# ISLAND             1.713556e+05  8.730461e+09
+# NEAR BAY           4.367524e+07  4.908729e+11
+# NEAR OCEAN         3.469109e+07  4.635066e+11
+# latitude           3.216078e+08  4.832706e+12
+# housing_median_age 1.649530e+08  2.180645e+12
+# population         1.812732e+08  1.237959e+12
+# households         1.829055e+08  1.322541e+12
+# median_income      1.100251e+09  3.549110e+13
+# mean_bedrooms      9.910677e+07  1.363818e+12
+# mean_rooms         3.104834e+08  7.162314e+12
+# median_house_value 2.127061e+10  1.466455e+14
+
+print(rf)
+# Call:
+#   randomForest(x = train_x, y = train_y, ntree = 500, importance = TRUE) 
+# Type of random forest: regression
+# Number of trees: 500
+# No. of variables tried at each split: 4
+# 
+# Mean of squared residuals: 21049074
+# % Var explained: 99.84
+
+# Evaluate the model's performance:
+
+# Use varImpPlot function to see which variables are considered important:
+varImpPlot(rf, main = "Chart of Variable Importance")
+
+# Compute the out-of-bag (oob) error estiamte:
+oob_prediction <- predict(rf)
+
+# Compute the training set RMSE:
+train_mse <- mean(as.numeric((oob_prediction - train_y)^2))
+oob_rmse <- sqrt(train_mse)
+oob_rmse
+# [1] 4587.927
+# This resulting RMSE is the prediction of median price of a house in a given district to within a RMSE delta of the actual median house price. 
+
+# Next, let's see how well the model predicts using the test data.
+y_pred <- predict(rf, test_x)
+
+# Now compute the test set RSME:
+test_mse <- mean(((y_pred - test_y)^2))
+test_rmse <- sqrt(test_mse)
+test_rmse
+# [1] 6029.655
+
